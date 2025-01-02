@@ -1,7 +1,7 @@
-import {ctx, TILE, mouse, canvas} from "./game.mjs";
+import {TILE, Mouse} from "./game.mjs";
 import {Vec2} from "./math.mjs";
 
-function drawText(text: string, x: number, y: number, size: number, color: string, align: CanvasTextAlign, baseline: CanvasTextBaseline = "alphabetic"): void {
+function drawText(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, size: number, color: string, align: CanvasTextAlign, baseline: CanvasTextBaseline = "alphabetic"): void {
     ctx.save();
     ctx.font = `${size}px arial`;
     ctx.textAlign = align;
@@ -11,7 +11,7 @@ function drawText(text: string, x: number, y: number, size: number, color: strin
     ctx.restore();
 }
 
-function drawButton(text: string, x: number, y: number, w: number, h: number): boolean {
+function drawButton(ctx: CanvasRenderingContext2D, mouse: Mouse, text: string, x: number, y: number, w: number, h: number): boolean {
     const isHovered = mouse.isInsideRect({
         pos: new Vec2(x, y),
         size: new Vec2(w, h)
@@ -19,11 +19,15 @@ function drawButton(text: string, x: number, y: number, w: number, h: number): b
     const isClicked = isHovered && mouse.isClicked;
 
     ctx.save();
-    ctx.strokeRect(x, y, w, h);
-    if (isHovered) ctx.fillRect(x, y, w, h);
+    if (isHovered) {
+        ctx.fillRect(x, y, w, h);
+    } else {
+        ctx.strokeRect(x, y, w, h);
+    }
     ctx.restore();
 
     drawText(
+        ctx,
         text,
         x + w / 2,
         y + h / 2,
@@ -33,16 +37,16 @@ function drawButton(text: string, x: number, y: number, w: number, h: number): b
         "middle"
     );
 
-    canvas.style.cursor = isHovered ? "pointer" : "default";
+    if (isHovered) mouse.style = "pointer";
     return isClicked;
 }
 
-export function drawTitle(title: string, x: number, y: number): void {
-    drawText(title, x, y, 2.5 * TILE, "black", "center");
+export function drawTitle(ctx: CanvasRenderingContext2D, title: string, x: number, y: number): void {
+    drawText(ctx, title, x, y, 2.5 * TILE, "black", "center");
 }
 
-export function drawPrimaryButton(text: string, x: number, y: number): boolean {
+export function drawPrimaryButton(ctx: CanvasRenderingContext2D, mouse: Mouse, text: string, x: number, y: number): boolean {
     const w = 9 * TILE;
     const h = 3 * TILE;
-    return drawButton(text, x - w / 2, y, w, h);
+    return drawButton(ctx, mouse, text, x - w / 2, y, w, h);
 }

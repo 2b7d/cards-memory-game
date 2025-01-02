@@ -1,22 +1,22 @@
-import {View, restart, CANVAS_HEIGHT, TILE, state, CANVAS_WIDTH} from "./game.mjs";
+import {View, restart, TILE, State, Mouse} from "./game.mjs";
 import {drawTitle, drawPrimaryButton} from "./ui.mjs";
 
-export function drawDone(): void {
-    let cursory = CANVAS_HEIGHT / 2 - 2 * TILE;
-    const cx = CANVAS_WIDTH / 2;
+export function drawDone(ctx: CanvasRenderingContext2D, state: State, mouse: Mouse): void {
+    let cursory = ctx.canvas.height / 2 - 2 * TILE;
+    const cx = ctx.canvas.width / 2;
 
     const title = state.lives > 0 ? "You are the Winner!" : "Game Over!";
-    drawTitle(title, cx, cursory);
+    drawTitle(ctx, title, cx, cursory);
 
     cursory += 2 * TILE;
 
     const text = state.lives > 0 ? "Play again" : "Try again";
-    if (drawPrimaryButton(text, cx, cursory)) restart();
+    if (drawPrimaryButton(ctx, mouse, text, cx, cursory)) restart(state);
 
     cursory += 4 * TILE;
 
-    if (drawPrimaryButton("Back to menu", cx, cursory)) {
-        restart();
+    if (drawPrimaryButton(ctx, mouse, "Back to menu", cx, cursory)) {
+        restart(state);
         state.view = View.Menu;
     }
 }

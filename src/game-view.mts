@@ -1,8 +1,8 @@
-import {mouse, state, View, canvas, assert, Card} from "./game.mjs";
+import {Mouse, State, View, assert, Card} from "./game.mjs";
 
 let unflipDelay = window.delayTime;
 
-export function handleGameInput(): void {
+export function handleGameInput(mouse: Mouse, state: State): void {
     if (!mouse.isClicked || state.selected.length >= 2) return;
     for (const c of state.cards) {
         if (mouse.isInsideRect(c) && !state.selected.includes(c)) {
@@ -13,32 +13,32 @@ export function handleGameInput(): void {
     }
 }
 
-export function updateGame(dt: number): void {
-    updateCursor();
-    updateSelected(dt);
+export function updateGame(mouse: Mouse, state: State, dt: number): void {
+    updateCursor(mouse, state);
+    updateSelected(state, dt);
     for (const c of state.cards) c.update(dt);
     if (state.cards.length == 0 || state.lives == 0) state.view = View.Done;
 }
 
-export function drawGame(): void {
-    for (const c of state.cards) c.draw();
+export function drawGame(ctx: CanvasRenderingContext2D, state: State): void {
+    for (const c of state.cards) c.draw(ctx);
 }
 
-function updateCursor(): void {
-    canvas.style.cursor = "default";
+function updateCursor(mouse: Mouse, state: State): void {
+    mouse.style = "default";
 
     if (state.selected.length >= 2) return;
 
     for (const c of state.cards) {
         if (c.isOpen) continue;
         if (mouse.isInsideRect(c)) {
-            canvas.style.cursor = "pointer";
+            mouse.style = "pointer";
             return;
         }
     }
 }
 
-function updateSelected(dt: number): void {
+function updateSelected(state: State, dt: number): void {
     if (state.selected.length < 2) return;
 
     const c1 = state.selected[0]!;

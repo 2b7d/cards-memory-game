@@ -1,9 +1,18 @@
 import "./init.mjs";
 
-import {assert, ctx, CANVAS_HEIGHT, CANVAS_WIDTH, TILE, state, mouse, View} from "./game.mjs";
+import {assert, initContext, TILE, initCards, State, Mouse, View} from "./game.mjs";
 import {handleGameInput, updateGame, drawGame} from "./game-view.mjs";
 import {drawDone} from "./done-view.mjs";
 import {drawMenu} from "./menu-view.mjs";
+
+const ctx = initContext();
+const mouse = new Mouse(ctx.canvas);
+const state: State = {
+    view: View.Menu,
+    cards: initCards(),
+    selected: [],
+    lives: 3,
+};
 
 let prevtime = 0;
 function gameLoop(time: number): void {
@@ -12,23 +21,23 @@ function gameLoop(time: number): void {
 
     // update
     if (state.view === View.Game) {
-        handleGameInput();
-        updateGame(dt);
+        handleGameInput(mouse, state);
+        updateGame(mouse, state, dt);
     }
 
     // draw
-    ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
     if (window.isDrawGrid) {
         ctx.save();
         ctx.beginPath();
-        for (let x = TILE; x < CANVAS_WIDTH; x += TILE) {
+        for (let x = TILE; x < ctx.canvas.width; x += TILE) {
             ctx.moveTo(x, 0);
-            ctx.lineTo(x, CANVAS_HEIGHT);
+            ctx.lineTo(x, ctx.canvas.height);
         }
-        for (let y = TILE; y < CANVAS_HEIGHT; y += TILE) {
+        for (let y = TILE; y < ctx.canvas.height; y += TILE) {
             ctx.moveTo(0, y);
-            ctx.lineTo(CANVAS_WIDTH, y);
+            ctx.lineTo(ctx.canvas.width, y);
         }
         ctx.strokeStyle = "lightgray";
         ctx.stroke();
@@ -37,21 +46,26 @@ function gameLoop(time: number): void {
 
     switch (state.view) {
     case View.Menu:
-        drawMenu();
+        drawMenu(ctx, state, mouse);
         break;
     case View.Game:
-        drawGame();
+        drawGame(ctx, state);
         break;
     case View.Done:
-        drawDone();
+        drawDone(ctx, state, mouse);
         break;
     default:
         assert(false, "Unreachable");
     }
+
+    ctx.canvas.style.cursor = mouse.style;
 
      //cleanup
     mouse.reset();
     requestAnimationFrame(gameLoop);
 }
 
-requestAnimationFrame(gameLoop);
+requestAnimationFrame(time => {
+    prevtime = time;
+    gameLoop(time);
+});

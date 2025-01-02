@@ -17,8 +17,8 @@ export const TILE = 25 * CANVAS_WIDTH / CANVAS_HEIGHT;
 export const CARD_WIDTH = 4 * TILE;
 export const CARD_HEIGHT = 5 * TILE;
 
-export const LEVEL_ROWS = 2;
-export const LEVEL_COLS = 2;
+export const LEVEL_ROWS = 4;
+export const LEVEL_COLS = 4;
 export const LEVEL_ROW_GAP = 2 * TILE;
 export const LEVEL_COL_GAP = 2 * TILE;
 export const LEVEL_WIDTH = LEVEL_COLS * CARD_WIDTH + (LEVEL_COLS - 1) * LEVEL_COL_GAP;
@@ -36,7 +36,7 @@ class Color extends Vec4 {
                this.w === that.w;
     }
 
-    toCss(): string {
+    toCSS(): string {
         return `rgb(${this.x} ${this.y} ${this.z} / ${this.w})`;
     }
 }
@@ -46,36 +46,30 @@ interface Rect {
     size: Vec2;
 }
 
-class Mouse {
-    private _pos = new Vec2(0, 0);
-    private _isClicked = false;
-
-    get isClicked(): boolean {
-        return this._isClicked;
-    }
-
-    get pos(): Vec2 {
-        return new Vec2(this._pos.x, this._pos.y);
-    }
+export class Mouse {
+    pos = new Vec2(0, 0);
+    isClicked = false;
+    style = "default";
 
     constructor(canvas: HTMLCanvasElement) {
-        canvas.addEventListener("mousemove", (e: MouseEvent) => {
-            this._pos.x = e.x - canvas.offsetLeft;
-            this._pos.y = e.y - canvas.offsetTop;
+        canvas.addEventListener("mousemove", event => {
+            this.pos.x = event.x - canvas.offsetLeft;
+            this.pos.y = event.y - canvas.offsetTop;
         });
 
         canvas.addEventListener("click", () => {
-            this._isClicked = true;
+            this.isClicked = true;
         });
     }
 
     reset(): void {
-        this._isClicked = false;
+        this.isClicked = false;
+        this.style = "default";
     }
 
     isInsideRect(r: Rect): boolean {
-        return this._pos.x >= r.pos.x && this._pos.x <= r.pos.x + r.size.x &&
-               this._pos.y >= r.pos.y && this._pos.y <= r.pos.y + r.size.y;
+        return this.pos.x >= r.pos.x && this.pos.x <= r.pos.x + r.size.x &&
+               this.pos.y >= r.pos.y && this.pos.y <= r.pos.y + r.size.y;
     }
 }
 
@@ -111,7 +105,7 @@ export class Card {
         this.color = {front, back};
     }
 
-    draw(): void {
+    draw(ctx: CanvasRenderingContext2D): void {
         ctx.save();
 
         const cx = this.pos.x + this.size.x / 2;
@@ -124,7 +118,7 @@ export class Card {
         let color = this.isClosed ? this.color.back : this.color.front;
         if (window.isDrawFront) color = this.color.front;
 
-        ctx.fillStyle = color.toCss();
+        ctx.fillStyle = color.toCSS();
         ctx.fillRect(this.pos.x, this.pos.y, this.size.x, this.size.y);
 
         ctx.restore();
@@ -157,30 +151,20 @@ export function assert(cond: boolean, usermsg = ""): void | never {
     }
 }
 
-export const [canvas, ctx] = initCanvas();
-export const mouse = new Mouse(canvas);
-
-export const state: State = {
-    view: View.Menu,
-    cards: initCards(),
-    selected: [],
-    lives: 3,
-};
-
 export const enum View {
     Menu = 0,
     Game,
     Done
 }
 
-interface State {
+export interface State {
     view: View;
     cards: Card[];
     selected: [Card?, Card?];
     lives: number;
 }
 
-function initCanvas(): [HTMLCanvasElement, CanvasRenderingContext2D] {
+export function initContext(): CanvasRenderingContext2D {
     const c = document.createElement("canvas");
     c.width = CANVAS_WIDTH;
     c.height = CANVAS_HEIGHT;
@@ -189,10 +173,10 @@ function initCanvas(): [HTMLCanvasElement, CanvasRenderingContext2D] {
     if (!ctx) throw new Error("failed to get context from canvas");
 
     document.body.appendChild(c);
-    return [c, ctx];
+    return ctx;
 }
 
-function initCards(): Card[] {
+export function initCards(): Card[] {
     const tmp: Card[] = [];
 
     const cx = CANVAS_WIDTH / 2 - LEVEL_WIDTH / 2;
@@ -224,7 +208,7 @@ function initCards(): Card[] {
     return tmp;
 }
 
-export function restart(): void {
+export function restart(state: State): void {
     state.view = View.Game;
     state.cards = initCards();
     state.selected = [];
